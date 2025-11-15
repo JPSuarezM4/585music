@@ -1,25 +1,35 @@
-const audioPlayer = document.createElement('audio');
-document.body.appendChild(audioPlayer);
+let player;
 
-function playAudioFromYouTube(url) {
-    const videoId = extractVideoId(url);
-    if (videoId) {
-        const audioUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        audioPlayer.src = audioUrl;
-        audioPlayer.play().catch(error => {
-            console.error('Error playing audio:', error);
-        });
-    } else {
-        console.error('Invalid YouTube URL');
-    }
+// YouTube llama a esta función automáticamente cuando carga la API
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+        height: '1',
+        width: '1',
+        videoId: '',
+        playerVars: {
+            autoplay: 1,
+            controls: 0
+        }
+    });
 }
 
 function extractVideoId(url) {
-    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^&\n]{11})/;
-    const matches = url.match(regex);
-    return matches ? matches[1] : null;
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
 }
 
-// Example usage
-const youtubeLink = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Replace with your YouTube link
-playAudioFromYouTube(youtubeLink);
+function playAudioFromYouTube() {
+    const url = document.getElementById("youtube-link").value;
+    const videoId = extractVideoId(url);
+
+    if (!videoId) {
+        alert("Invalid YouTube Link");
+        return;
+    }
+
+    player.loadVideoById(videoId);
+}
+
+// Botón que llama a la función
+document.getElementById("play-button").addEventListener("click", playAudioFromYouTube);
