@@ -1,4 +1,5 @@
 let player;
+let isReady = false;
 let isPlaying = false;
 
 function onYouTubeIframeAPIReady() {
@@ -11,11 +12,33 @@ function onYouTubeIframeAPIReady() {
             controls: 0
         },
         events: {
-            onReady: () => {
-                setInterval(updateProgressBar, 500);
-            }
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange
         }
     });
+}
+
+function onPlayerReady() {
+    isReady = true;
+
+    // Actualizar barra de progreso cada 300ms
+    setInterval(() => {
+        if (player && isPlaying) {
+            updateProgressBar();
+        }
+    }, 300);
+}
+
+function onPlayerStateChange(event) {
+    // 1 = playing, 2 = paused
+    if (event.data === YT.PlayerState.PLAYING) {
+        isPlaying = true;
+    }
+    if (event.data === YT.PlayerState.PAUSED) {
+        isPlaying = false;
+    }
+
+    updatePlayPauseButton();
 }
 
 function extractVideoId(url) {
@@ -25,6 +48,8 @@ function extractVideoId(url) {
 }
 
 document.getElementById("play-button").addEventListener("click", () => {
+    if (!isReady) return alert("Player not ready yet. Try again.");
+
     const url = document.getElementById("youtube-link").value;
     const videoId = extractVideoId(url);
 
@@ -35,24 +60,20 @@ document.getElementById("play-button").addEventListener("click", () => {
 
     player.loadVideoById(videoId);
 
+    // Esperar a que cargue
     setTimeout(() => {
         player.playVideo();
-        isPlaying = true;
-        updatePlayPauseButton();
-    }, 400);
+    }, 500);
 });
 
 document.getElementById("play-pause").addEventListener("click", () => {
-    if (!player) return;
+    if (!isReady) return;
 
     if (isPlaying) {
         player.pauseVideo();
     } else {
         player.playVideo();
     }
-
-    isPlaying = !isPlaying;
-    updatePlayPauseButton();
 });
 
 function updatePlayPauseButton() {
@@ -61,16 +82,15 @@ function updatePlayPauseButton() {
 }
 
 function updateProgressBar() {
-    if (!player || player.getDuration() === 0) return;
+    const duration = player.getDuration();
+    if (!duration || duration === 0) return;
 
     const current = player.getCurrentTime();
-    const total = player.getDuration();
-    const percent = (current / total) * 100;
+    const percent = (current / duration) * 100;
 
     document.getElementById("progress").value = percent;
-
-    document.getElementById("time").textContent = 
-        `${formatTime(current)} / ${formatTime(total)}`;
+    document.getElementById("time").textContent =
+        `${formatTime(current)} / ${formatTime(duration)}`;
 }
 
 function formatTime(sec) {
@@ -79,13 +99,19 @@ function formatTime(sec) {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
-document.getElementById("progress").addEventListener("input", (e) => {
-    const percent = e.target.value;
-    const total = player.getDuration();
-    player.seekTo((percent / 100) * total, true);
+document.getElementById("progress").addEventListener("input", (event) => {
+    if (!isReady) return;
+
+    const percent = event.target.value;
+    const duration = player.getDuration();
+    const newTime = (percent / 100) * duration;
+
+    player.seekTo(newTime, true);
 });
 
-document.getElementById("volume").addEventListener("input", (e) => {
-    const volume = e.target.value;
+document.getElementById("volume").addEventListener("input", (event) => {
+    if (!isReady) return;
+
+    const volume = event.target.value;
     player.setVolume(volume);
 });
