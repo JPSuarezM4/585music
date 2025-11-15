@@ -7,7 +7,7 @@ function onYouTubeIframeAPIReady() {
         width: '1',
         videoId: '',
         playerVars: {
-            autoplay: 1,
+            autoplay: 0,  // Importante: evitar autoplay antes del click
             controls: 0
         }
     });
@@ -28,8 +28,18 @@ function playAudioFromYouTube() {
         return;
     }
 
+    // 1. Cargar video
     player.loadVideoById(videoId);
+
+    // 2. Forzar play después de una pequeña pausa (solución al NotAllowedError)
+    setTimeout(() => {
+        try {
+            player.playVideo();
+        } catch (error) {
+            console.error("Error playing audio:", error);
+        }
+    }, 300);
 }
 
-// Botón que llama a la función
+// Listener del botón
 document.getElementById("play-button").addEventListener("click", playAudioFromYouTube);
