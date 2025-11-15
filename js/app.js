@@ -1,14 +1,19 @@
 let player;
+let isPlaying = false;
 
-// YouTube llama a esta función automáticamente cuando carga la API
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
         height: '1',
         width: '1',
         videoId: '',
         playerVars: {
-            autoplay: 0,  // Importante: evitar autoplay antes del click
+            autoplay: 0,
             controls: 0
+        },
+        events: {
+            onReady: () => {
+                setInterval(updateProgressBar, 500);
+            }
         }
     });
 }
@@ -19,7 +24,7 @@ function extractVideoId(url) {
     return match ? match[1] : null;
 }
 
-function playAudioFromYouTube() {
+document.getElementById("play-button").addEventListener("click", () => {
     const url = document.getElementById("youtube-link").value;
     const videoId = extractVideoId(url);
 
@@ -28,18 +33,59 @@ function playAudioFromYouTube() {
         return;
     }
 
-    // 1. Cargar video
     player.loadVideoById(videoId);
 
-    // 2. Forzar play después de una pequeña pausa (solución al NotAllowedError)
     setTimeout(() => {
-        try {
-            player.playVideo();
-        } catch (error) {
-            console.error("Error playing audio:", error);
-        }
-    }, 300);
+        player.playVideo();
+        isPlaying = true;
+        updatePlayPauseButton();
+    }, 400);
+});
+
+document.getElementById("play-pause").addEventListener("click", () => {
+    if (!player) return;
+
+    if (isPlaying) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+
+    isPlaying = !isPlaying;
+    updatePlayPauseButton();
+});
+
+function updatePlayPauseButton() {
+    const btn = document.getElementById("play-pause");
+    btn.textContent = isPlaying ? "⏸️" : "▶️";
 }
 
-// Listener del botón
-document.getElementById("play-button").addEventListener("click", playAudioFromYouTube);
+function updateProgressBar() {
+    if (!player || player.getDuration() === 0) return;
+
+    const current = player.getCurrentTime();
+    const total = player.getDuration();
+    const percent = (current / total) * 100;
+
+    document.getElementById("progress").value = percent;
+
+    document.getElementById("time").textContent = 
+        `${formatTime(current)} / ${formatTime(total)}`;
+}
+
+function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+}
+
+document.getElementById("progress").addEventListener("input", (e) => {
+    const percent = e.target.value;
+    const total = player.getDuration();
+    player.seekTo((percent / 100) * total, true);
+});
+
+document.getElementById("volume").addEventListener("input", (e) => {
+    const volume = e.target.value;
+    player.setVolume(volume);
+});

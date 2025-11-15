@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPO Music</title>
+    <title>YouTube Audio Player</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>585music</h1>
+        <h1>YouTube Audio Player</h1>
 
-        <input type="text" id="youtube-link" placeholder="Enter YouTube link here">
-        <button id="play-button">Play Audio</button>
+        <input type="text" id="youtube-link" placeholder="Enter YouTube link...">
+        <button id="play-button">Load Audio</button>
 
-        <!-- Reproductor de YouTube oculto -->
-        <div id="player" style="width:1px; height:1px; overflow:hidden;"></div>
+        <div id="player" class="hidden"></div>
+
+        <div class="controls">
+            <button id="play-pause">▶️</button>
+            <input type="range" id="progress" value="0" min="0" max="100">
+            <span id="time">0:00 / 0:00</span>
+
+            <input type="range" id="volume" min="0" max="100" value="50">
+        </div>
     </div>
 
-    <script src="js/app.js"></script>
-
-    <!-- Script de la API de YouTube -->
     <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
